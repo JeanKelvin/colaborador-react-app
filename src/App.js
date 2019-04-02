@@ -8,7 +8,6 @@ class App extends Component {
     super();
     this.state = {listaColaborador: [], listaSetor: [], nome:'', cpf:'', email:'', dataNascimento:'', setorId:''};
     this.enviaForm = this.enviaForm.bind(this);
-    this.getListaColaborador = this.getListaColaborador.bind(this);
   }
 
   componentDidMount() {
@@ -21,6 +20,9 @@ class App extends Component {
       url:"http://localhost:8080/colaborador",
       dataType:'json',
       success:function(resposta) {
+        for(let i = 0; i < resposta.length; i ++) {
+          resposta[i].dataNascimento = this.formatDate(resposta[i].dataNascimento)
+        }
         this.setState({listaColaborador:resposta});
       }.bind(this)
     });
@@ -56,7 +58,7 @@ class App extends Component {
         dataNascimento:new Date(this.state.dataNascimento),
         setorId:this.state.setorId}),
       success: function(resposta){
-        console.log(resposta);
+        resposta.dataNascimento = this.formatDate(resposta.dataNascimento)
 
         let listaAtual = this.state.listaColaborador;
         listaAtual.push(resposta);
@@ -67,6 +69,17 @@ class App extends Component {
         console.log(resposta);
       }
     });
+  }
+
+  formatDate(date) {
+    var data = new Date(date),
+        dia  = data.getDate().toString(),
+        diaF = (dia.length === 1) ? '0'+dia : dia,
+        mes  = (data.getMonth()+1).toString(), //+1 pois no getMonth Janeiro começa com zero.
+        mesF = (mes.length === 1) ? '0'+mes : mes,
+        anoF = data.getFullYear();
+    
+    return diaF+"-"+mesF+"-"+anoF;
   }
 
   render() {
