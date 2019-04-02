@@ -6,17 +6,14 @@ class App extends Component {
 
   constructor() {
     super();
-    this.state = {lista: [], nome:'', cpf:'', email:'', dataNascimento:''};
+    this.state = {listaColaborador: [], listaSetor: [], nome:'', cpf:'', email:'', dataNascimento:'', setorId:''};
     this.enviaForm = this.enviaForm.bind(this);
     this.getListaColaborador = this.getListaColaborador.bind(this);
-    this.setNome = this.setNome.bind(this);
-    this.setEmail = this.setEmail.bind(this);
-    this.setCPF = this.setCPF.bind(this);
-    this.setDataNascimento = this.setDataNascimento.bind(this);
   }
 
   componentDidMount() {
     this.getListaColaborador();
+    this.getListaSetor();
   }
 
   getListaColaborador() {
@@ -24,7 +21,17 @@ class App extends Component {
       url:"http://localhost:8080/colaborador",
       dataType:'json',
       success:function(resposta) {
-        this.setState({lista:resposta});
+        this.setState({listaColaborador:resposta});
+      }.bind(this)
+    });
+  }
+
+  getListaSetor() {
+    $.ajax({
+      url:"http://localhost:8080/setor",
+      dataType:'json',
+      success:function(resposta) {
+        this.setState({listaSetor:resposta});
       }.bind(this)
     });
   }
@@ -33,6 +40,7 @@ class App extends Component {
     let campoSendoAlterado = {};
     campoSendoAlterado[nomeInput] = evento.target.value;
     this.setState(campoSendoAlterado);
+    console.log(campoSendoAlterado)
   }
 
   enviaForm(evento) {
@@ -42,56 +50,47 @@ class App extends Component {
       contentType: 'application/json',
       dataType:'json',
       type:'post',
-      data: JSON.stringify({nome:this.state.nome, cpf:this.state.cpf, email:this.state.email, dataNascimento:this.state.dataNascimento}),
+      data: JSON.stringify({nome:this.state.nome, 
+        cpf:this.state.cpf, 
+        email:this.state.email, 
+        dataNascimento:new Date(this.state.dataNascimento),
+        setorId:this.state.setorId}),
       success: function(resposta){
         console.log(resposta);
 
-        let listaAtual = this.state.lista;
+        let listaAtual = this.state.listaColaborador;
         listaAtual.push(resposta);
-        this.setState({lista:listaAtual});
+        this.setState({listaColaborador:listaAtual});
 
       }.bind(this),
       error: function(resposta){
         console.log(resposta);
       }
     });
-    this.getListaColaborador();
   }
-
-  setNome(evento){
-    this.setState({nome:evento.target.value});
-  }
-
-  setEmail(evento){
-    this.setState({email:evento.target.value});
-  }
-  
-  setCPF(evento){
-    this.setState({cpf:evento.target.value});
-  }
-
-  setDataNascimento(evento){
-    this.setState({dataNascimento:evento.target.value});
-  } 
 
   render() {
+    var setores = this.state.listaSetor.map(function (setor) {
+      return <option key={setor.id} value={setor.id}>{setor.descricao}</option>
+    });
+    
     return (
       <Card>
-        <Card.Header>Colaborador</Card.Header>
+        <Card.Header>Cadastrar Colaborador</Card.Header>
         <Card.Body>
-          <Card.Title>Cadastrar Colaborador</Card.Title>
+          <Card.Title></Card.Title>
           <Form onSubmit={this.enviaForm} method="post">
             <Row>
               <Col sm="6">
                 <Form.Group>
                   <Form.Label>Nome</Form.Label>
-                  <Form.Control type="text" placeholder="Digite o nome" value={this.state.nome} onChange={this.setNome}/>
+                  <Form.Control type="text" placeholder="Digite o nome" value={this.state.nome} onChange={this.salvaAlteracao.bind(this,'nome')}/>
                 </Form.Group>
               </Col>
               <Col sm="6">
                 <Form.Group>
                   <Form.Label>Email</Form.Label>
-                  <Form.Control type="email" placeholder="Digite o email" value={this.state.email} onChange={this.setEmail}/>
+                  <Form.Control type="email" placeholder="Digite o email" value={this.state.email} onChange={this.salvaAlteracao.bind(this,'email')}/>
                 </Form.Group>
               </Col>
             </Row>
@@ -100,13 +99,24 @@ class App extends Component {
               <Col sm="6">
                 <Form.Group>
                   <Form.Label>CPF</Form.Label>
-                  <Form.Control type="text" placeholder="Digite o cpf" value={this.state.cpf} onChange={this.setCPF}/>
+                  <Form.Control type="text" placeholder="Digite o cpf" value={this.state.cpf} onChange={this.salvaAlteracao.bind(this,'cpf')}/>
                 </Form.Group>
               </Col>
               <Col sm="6">
                 <Form.Group>
                   <Form.Label>Data nascimento</Form.Label>
-                  <Form.Control type="date" placeholder="Digite o email" value={this.state.dataNascimento} onChange={this.setDataNascimento}/>
+                  <Form.Control type="date" placeholder="Digite o email" value={this.state.dataNascimento} onChange={this.salvaAlteracao.bind(this,'dataNascimento')}/>
+                </Form.Group>
+              </Col>
+            </Row>
+            <Row>
+              <Col sm="6">
+                <Form.Group>
+                  <Form.Label>Selecione o setor</Form.Label>
+                    <Form.Control as="select" multiple={false} name="setor" value={this.state.setorId} onChange={this.salvaAlteracao.bind(this,'setorId')}>
+                      <option defaultValue=""></option>
+                      {setores}
+                  </Form.Control>
                 </Form.Group>
               </Col>
             </Row>
@@ -127,7 +137,7 @@ class App extends Component {
             </thead>
             <tbody>
               {
-                this.state.lista.map(function(colaborador){
+                this.state.listaColaborador.map(function(colaborador){
                   return (
                     <tr key={colaborador.id}>
                       <td>{colaborador.nome}</td>
